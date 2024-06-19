@@ -15,8 +15,9 @@ const LoginPage = () => {
     });
 
     const data = await response.json();
+    console.log(data);  // Check the server response
     if (data.success) {
-      navigate('/todo');
+      navigate('/todo', { state: { username: username } });
     } else {
       alert('Invalid credentials');
     }
@@ -25,7 +26,7 @@ const LoginPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 lg:px-8">
       <div className="w-full max-w-md">
-        <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900">Welcome !</h1>
+        <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900">Welcome!</h1>
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
@@ -56,17 +57,13 @@ const LoginPage = () => {
             Login
           </button>
         </form>
-        <p class="mt-10 text-center text-sm text-gray-500">
+        <p className="mt-10 text-center text-sm text-gray-500">
           Not a user yet?
-          <a href="#" class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"> Sign Up</a>
+          <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"> Sign Up</a>
         </p>
       </div>
     </div>
   );
-  
-  
-  
-  
 };
 
 export default LoginPage;
