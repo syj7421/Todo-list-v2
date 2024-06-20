@@ -51,6 +51,20 @@ app.get('/api/todos/:username', async (req, res) => {
   }
 });
 
+app.post('/api/todos/add', async (req, res) => {
+  const { title, description, duedate, duetime, username } = req.body;
+
+  try {
+    await db.query("INSERT INTO todo_lists (title, description, duedate, duetime, username) VALUES ($1, $2, $3, $4, $5)", [title, description, duedate, duetime, username]);
+    res.status(201).send({ message: "Todo added successfully" });
+  } catch (err) {
+    console.error('Error adding todo:', err); // Log the error
+    res.status(500).json({ error: "Failed to add todo", details: err.detail, stack: err.stack }); // Send detailed error response
+  }
+});
+
+
+
   
 
 // Passport Local Strategy

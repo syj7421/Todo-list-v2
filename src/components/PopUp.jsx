@@ -1,52 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-
-function PopUp({ todo, togglePopup, fetchTodos }) {
+function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
+  const [showDate, setShowDate] = useState(true);
+  const [showTime, setShowTime] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
-    details: '',
+    description: '',
     duedate: '',
-    duetime: ''
+    duetime: '',
+    username: username
   });
-  const [dateVisible, setDateVisible] = useState(true);
-  const [timeVisible, setTimeVisible] = useState(true);
-  const [today, setToday] = useState('');
-  const [currentTime, setCurrentTime] = useState('');
 
-  useEffect(() => {
-    updateDateAndTime();  // Ensure this is called to set 'today' and 'currentTime'
-    if (todo) {
-      let formattedDate = '';
-      if (todo.duedate) {
-        const utcDate = new Date(todo.duedate); // Create a date object directly from the ISO string
-        formattedDate = utcDate.toLocaleDateString('en-CA'); // Formats to 'YYYY-MM-DD', ensuring local timezone is considered
-      }
-  
+  const toggleDateVisibility = () => {
+    setShowDate(!showDate);
+    setShowTime(false);
+    if (!showDate) {
       setFormData({
-        title: todo.title || '',
-        details: todo.details || '',
-        duedate: formattedDate,
-        duetime: todo.duetime ? todo.duetime.substring(0, 5) : ''
+        ...formData,
+        duedate: '',
+        duetime: ''
       });
-      setDateVisible(todo.duedate !== null && todo.duedate !== '');
-      setTimeVisible(todo.duetime !== null && todo.duetime !== '');
+      setShowTime(false);
     } else {
       setFormData({
-        title: '',
-        details: '',
+        ...formData,
         duedate: '',
         duetime: ''
       });
     }
-  }, [todo]);
-  
+  };
 
-  const updateDateAndTime = () => {
-    const date = new Date();
-    const formattedDate = date.toISOString().substring(0, 10); // Formats the date to YYYY-MM-DD
-    const formattedTime = date.toTimeString().substring(0, 5); // Formats time to HH:MM
-    setToday(formattedDate);
-    setCurrentTime(formattedTime);
+  const toggleTimeVisibility = () => {
+    setShowTime(!showTime);
+    if (!showTime) {
+      setFormData({
+        ...formData,
+        duetime: ''
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -56,8 +47,6 @@ function PopUp({ todo, togglePopup, fetchTodos }) {
     });
   };
 
-  const minTime = formData.duedate === today ? currentTime : "00:00";
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -65,23 +54,23 @@ function PopUp({ todo, togglePopup, fetchTodos }) {
       alert("The title shouldn't be empty!");
       return;
     } 
-    if (formData.duedate === '' && dateVisible) {
+    if (showDate && formData.duedate === '') {
       alert("The due date shouldn't be empty!");
       return;
     }
-    if (formData.duetime === '' && timeVisible) {
+    if (showTime && formData.duetime === '') {
       alert("The due time shouldn't be empty!");
       return;
     }
 
     const submitData = {
       ...formData,
-      duedate: dateVisible ? formData.duedate : null,
-      duetime: (dateVisible && timeVisible) ? formData.duetime : null
+      duedate: showDate ? formData.duedate : null,
+      duetime: showTime ? formData.duetime : null
     };
 
-    const url = todo ? `/api/todos/update/${todo.id}` : '/api/todos/add';
-    const method = todo ? 'PUT' : 'POST';
+    const url = 'http://localhost:5000/api/todos/add';
+    const method = 'POST';
 
     try {
       const response = await fetch(url, {
@@ -94,72 +83,78 @@ function PopUp({ todo, togglePopup, fetchTodos }) {
       if (response.ok) {
         await fetchTodos();
         togglePopup();
+        setFormData({
+          title: '',
+          description: '',
+          duedate: '',
+          duetime: '',
+          username: username
+        });
+        setShowDate(true);
+        setShowTime(true);
       } else {
         throw new Error('Failed to process todo');
       }
     } catch (error) {
       console.error('Failed to submit form', error);
     }
-  };
-
-  const toggleDateVisibility = () => {
-    const newVisibility = !dateVisible;
-    setDateVisible(newVisibility);
-    if (!newVisibility) {
-      setTimeVisible(false);
-      setFormData({ 
-        ...formData, 
-        duedate: '', 
-        duetime: '' // Clear both fields when date is not specified
-      });
-    } else {
-      setFormData({ 
-        ...formData, 
-        duedate: ''
-      });
-    }
-  };
-
-  const toggleTimeVisibility = () => {
-    setTimeVisible(!timeVisible);
-    if (!timeVisible) {
-      setFormData({ 
-        ...formData, 
-        duetime: ''
-      });
-    }
-  };
+  }
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="title">Title</label>
-        <input type="text" id="title" name="title" value={formData.title} onChange={handleChange}/>
-        <label htmlFor="details">Details</label>
-        <input type="text" id="details" name="details" value={formData.details} onChange={handleChange}/>
-
-        <div className="date-container">
-          {dateVisible ? (
-            <>
-              <label htmlFor="duedate">Due Date</label>
-              <input type="date" id="duedate" name="duedate" value={formData.duedate} onChange={handleChange} min={today} max="2050-12-31" />
-            </>
-          ) : null}
-          <button type="button" onClick={toggleDateVisibility}>{dateVisible ? 'Do not specify due date' : 'Specify due date'}</button>
-        </div>
-
-        <div className="time-container">
-          {timeVisible && dateVisible ? (
-            <>
-              <label htmlFor="duetime">Due Time</label>
-              <input type="time" id="duetime" name="duetime" value={formData.duetime} onChange={handleChange} min={minTime}/>
-            </>
-          ) : null}
-          {dateVisible && <button type="button" onClick={toggleTimeVisibility}>{timeVisible ? 'Do not specify due time' : 'Specify due time'}</button>}
-        </div>
-        <button type="submit">{todo ? 'Update' : 'Add'}</button>
-      </form>
-      <button type="button" onClick={togglePopup}>Close</button>
+    <div id="default-modal" aria-hidden={!isOpen} className={`${isOpen ? 'flex' : 'hidden'} overflow-y-auto overflow-x-hidden fixed inset-0 z-50 justify-center items-center w-full h-full`}>
+      <div className="relative p-6 w-full max-w-2xl h-full md:h-auto bg-white rounded-lg shadow dark:bg-gray-700">
+        <h1 className="text-xl font-bold mb-4">Add New Todo:</h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Title</label>
+            <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
+          </div>
+          <div>
+            <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
+            <input id="description" name="description" value={formData.description} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" rows="3"></input>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {showDate && (
+              <>
+                <div>
+                  <label htmlFor="duedate" className="block text-sm font-medium text-gray-900 dark:text-white">Due Date</label>
+                  <input type="date" id="duedate" name="duedate" value={formData.duedate} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                </div>
+                <button type="button" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-blue-300 text-sm" onClick={toggleDateVisibility}>
+                  {showDate ? 'Do not specify date' : 'Specify date'}
+                </button>
+              </>
+            )}
+            {!showDate && (
+              <button type="button" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-blue-300 text-sm" onClick={toggleDateVisibility}>
+                Specify date
+              </button>
+            )}
+            {showDate && showTime && (
+              <>
+                <div>
+                  <label htmlFor="duetime" className="block text-sm font-medium text-gray-900 dark:text-white">Due Time</label>
+                  <input type="time" id="duetime" name="duetime" value={formData.duetime} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                </div>
+                <button type="button" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-blue-300 text-sm" onClick={toggleTimeVisibility}>
+                  {showTime ? 'Do not specify time' : 'Specify time'}
+                </button>
+              </>
+            )}
+            {showDate && !showTime && (
+              <button type="button" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-blue-300 text-sm" onClick={toggleTimeVisibility}>
+                Specify time
+              </button>
+            )}
+          </div>
+          <div className="flex justify-between space-x-2">
+            <button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-blue-300 text-sm">Submit</button>
+            <button type="button" className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-4 focus:ring-red-300 text-sm" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
