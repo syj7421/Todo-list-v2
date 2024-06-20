@@ -27,6 +27,7 @@ function TodoContent({ todos, fetchTodos }) {
     setIsPopupOpen(true);
   };
 
+
   const togglePopup = () => {
     setIsPopupOpen(!isPopupOpen);
     setSelectedTodo(null);
