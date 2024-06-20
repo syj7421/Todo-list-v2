@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
+function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username, todo }) {
   const [showDate, setShowDate] = useState(true);
   const [showTime, setShowTime] = useState(true);
   const [formData, setFormData] = useState({
@@ -11,6 +11,30 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
     username: username
   });
 
+  useEffect(() => {
+    if (todo) {
+      setFormData({
+        title: todo.title || '',
+        description: todo.description || '',
+        duedate: todo.duedate ? new Date(todo.duedate).toISOString().split('T')[0] : '',
+        duetime: todo.duetime || '',
+        username: username
+      });
+      setShowDate(todo.duedate !== null && todo.duedate !== '');
+      setShowTime(todo.duetime !== null && todo.duetime !== '');
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        duedate: '',
+        duetime: '',
+        username: username
+      });
+      setShowDate(true);
+      setShowTime(true);
+    }
+  }, [todo, username]);
+
   const toggleDateVisibility = () => {
     setShowDate(!showDate);
     setShowTime(false);
@@ -20,7 +44,6 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
         duedate: '',
         duetime: ''
       });
-      setShowTime(false);
     } else {
       setFormData({
         ...formData,
@@ -66,11 +89,11 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
     const submitData = {
       ...formData,
       duedate: showDate ? formData.duedate : null,
-      duetime: showTime ? formData.duetime : null
+      duetime: showDate && showTime ? formData.duetime : null
     };
 
-    const url = 'http://localhost:5000/api/todos/add';
-    const method = 'POST';
+    const url = todo ? `http://localhost:5000/api/todos/${todo.id}` : 'http://localhost:5000/api/todos/add';
+    const method = todo ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(url, {
@@ -103,7 +126,7 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username }) {
   return (
     <div id="default-modal" aria-hidden={!isOpen} className={`${isOpen ? 'flex' : 'hidden'} overflow-y-auto overflow-x-hidden fixed inset-0 z-50 justify-center items-center w-full h-full`}>
       <div className="relative p-6 w-full max-w-2xl h-full md:h-auto bg-white rounded-lg shadow dark:bg-gray-700">
-        <h1 className="text-xl font-bold mb-4">Add New Todo:</h1>
+        <h1 className="text-xl font-bold mb-4">{todo ? 'Edit Todo' : 'Add New Todo'}</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Title</label>

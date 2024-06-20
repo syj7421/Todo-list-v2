@@ -75,6 +75,20 @@ app.delete('/api/todos/:id', async (req, res) => {
   }
 });
 
+app.put('/api/todos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description, duedate, duetime, username } = req.body;
+
+  try {
+    await db.query("UPDATE todo_lists SET title = $1, description = $2, duedate = $3, duetime = $4 WHERE id = $5 AND username = $6", [title, description, duedate, duetime, id, username]);
+    res.status(200).send({ message: "Todo updated successfully" });
+  } catch (err) {
+    console.error('Error updating todo:', err); // Log the error
+    res.status(500).json({ error: "Failed to update todo", details: err.detail, stack: err.stack }); // Send detailed error response
+  }
+});
+
+
 
   
 
