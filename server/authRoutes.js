@@ -13,7 +13,7 @@ router.post('/login', (req, res, next) => {
       console.error('Authentication failed:', info.message);
       return res.status(401).send({ success: false, message: 'Invalid credentials' });
     }
-    res.send({ success: true });
+    res.send({ success: true, user: user });
   })(req, res, next);
 });
 

@@ -10,10 +10,16 @@ const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Enable JSON parsing
+app.use(cors());
+app.use(express.json());
 app.use(passport.initialize());
 env.config();
+
+const users = [{
+  id: '1',
+  username: 'abc123',
+  password: '1234'
+}];
 
 const db = new pg.Client({
   user: process.env.PG_USER,
@@ -21,51 +27,53 @@ const db = new pg.Client({
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
-});
+  });
 
 db.connect(error => {
   if (error) {
-    console.error('Failed to connect to the database', error);
-    process.exit(1);
+  console.error('Failed to connect to the database', error);
+  process.exit(1);
   } else {
-    console.log('Connected to the database');
+  console.log('Connected to the database');
   }
 });
-
 
 app.get('/api/todos/:username', async (req, res) => {
   try {
-    const { username } = req.params; // Get the username from the route parameters
-    const query = `
-      SELECT 
-        id, 
-        title, 
-        description, // It seems 'details' should be 'description' as per your database structure
-        duedate,
-        TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate,
-        duetime
-      FROM todo_lists // Assuming the correct table name is 'todo_lists'
-      WHERE username = $1 // Use parameterized query for security
-      ORDER BY duedate;
-    `;
-    const { rows } = await db.query(query, [username]); // Pass username to the query
-    res.json(rows);
+  const username = req.params.username.trim();
+  console.log('Requested todos for username:', username);
+  const query = `SELECT id, title, description, duedate, TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate, duetime FROM todo_lists WHERE username = $1 ORDER BY duedate; `;
+  const { rows } = await db.query(query, [username]); 
+  res.json(rows);
   } catch (error) {
-    console.error('Error executing query', error.stack);
-    res.status(500).json({ error: error.message });
+  console.error('Error executing query', error.stack);
+  res.status(500).json({ error: error.message });
   }
 });
 
+  
 
 // Passport Local Strategy
-passport.use(new LocalStrategy((username, password, done) => {
-  const user = users.find(user => user.id === username && user.password === password);
+passport.use(new LocalStrategy({
+  usernameField: 'username',
+  passwordField: 'password'
+}, (username, password, done) => {
+  const user = users.find(user => user.username === username && user.password === password);
   if (user) {
     return done(null, user);
   } else {
     return done(null, false, { message: 'Incorrect credentials.' });
   }
 }));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  const user = users.find(user => user.id === id);
+  done(null, user);
+});
 
 // Routes
 app.use('/auth', authRoutes);
