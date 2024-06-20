@@ -63,6 +63,17 @@ app.post('/api/todos/add', async (req, res) => {
   }
 });
 
+app.delete('/api/todos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await db.query("DELETE FROM todo_lists WHERE id = $1", [id]);
+    res.status(200).send({ message: "Todo deleted successfully" });
+  } catch (err) {
+    console.error('Error deleting todo:', err); // Log the error
+    res.status(500).json({ error: "Failed to delete todo", details: err.detail, stack: err.stack }); // Send detailed error response
+  }
+});
 
 
   
