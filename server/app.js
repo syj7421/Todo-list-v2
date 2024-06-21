@@ -4,50 +4,29 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import authRoutes from './authRoutes.js';
 import env from 'dotenv';
-import pg from "pg";
+import db from './db.js';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 const PORT = 5000;
+
+env.config();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
-env.config();
-
-const users = [{
-  id: '1',
-  username: 'abc123',
-  password: '1234'
-}];
-
-const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
-  });
-
-db.connect(error => {
-  if (error) {
-  console.error('Failed to connect to the database', error);
-  process.exit(1);
-  } else {
-  console.log('Connected to the database');
-  }
-});
 
 app.get('/api/todos/:username', async (req, res) => {
   try {
-  const username = req.params.username.trim();
-  console.log('Requested todos for username:', username);
-  const query = `SELECT id, title, description, duedate, TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate, duetime FROM todo_lists WHERE username = $1 ORDER BY duedate; `;
-  const { rows } = await db.query(query, [username]); 
-  res.json(rows);
+    const username = req.params.username.trim();
+    console.log('Requested todos for username:', username);
+    const query = `SELECT id, title, description, duedate, TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate, duetime FROM todo_lists WHERE username = $1 ORDER BY duedate; `;
+    const { rows } = await db.query(query, [username]);
+    res.json(rows);
   } catch (error) {
-  console.error('Error executing query', error.stack);
-  res.status(500).json({ error: error.message });
+    console.error('Error executing query', error.stack);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -88,20 +67,28 @@ app.put('/api/todos/:id', async (req, res) => {
   }
 });
 
-
-
-  
-
 // Passport Local Strategy
 passport.use(new LocalStrategy({
   usernameField: 'username',
   passwordField: 'password'
-}, (username, password, done) => {
-  const user = users.find(user => user.username === username && user.password === password);
-  if (user) {
-    return done(null, user);
-  } else {
-    return done(null, false, { message: 'Incorrect credentials.' });
+}, async (username, password, done) => {
+  try {
+    const query = `SELECT * FROM users WHERE username = $1`;
+    const { rows } = await db.query(query, [username]);
+    const user = rows[0];
+
+    if (!user) {
+      return done(null, false, { message: 'Incorrect username.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch) {
+      return done(null, user);
+    } else {
+      return done(null, false, { message: 'Incorrect password.' });
+    }
+  } catch (err) {
+    return done(err);
   }
 }));
 
@@ -109,9 +96,15 @@ passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-  const user = users.find(user => user.id === id);
-  done(null, user);
+passport.deserializeUser(async (id, done) => {
+  try {
+    const query = `SELECT * FROM users WHERE id = $1`;
+    const { rows } = await db.query(query, [id]);
+    const user = rows[0];
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
 });
 
 // Routes
