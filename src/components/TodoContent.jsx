@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Todo from "./Todo";
 import PopUp from "./PopUp";
 
-function TodoContent({ todos, fetchTodos }) {
+function TodoContent({ todos, fetchTodos, username }) {
   const [selectedTodo, setSelectedTodo] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
@@ -44,7 +44,7 @@ function TodoContent({ todos, fetchTodos }) {
           onClose={togglePopup}
           fetchTodos={fetchTodos}
           togglePopup={togglePopup}
-          username="abc123" // Pass the username as needed
+          username={username} 
           todo={selectedTodo}
         />
       )}

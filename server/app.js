@@ -21,7 +21,7 @@ app.get('/api/todos/:username', async (req, res) => {
   try {
     const username = req.params.username.trim();
     console.log('Requested todos for username:', username);
-    const query = `SELECT id, title, description, duedate, TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate, duetime FROM todo_lists WHERE username = $1 ORDER BY duedate; `;
+    const query = `SELECT id, title, description, duedate, TO_CHAR(duedate, 'DD-MM-YYYY') as formatted_duedate, duetime FROM todo_lists WHERE username = $1 ORDER BY duedate;`;
     const { rows } = await db.query(query, [username]);
     res.json(rows);
   } catch (error) {
@@ -57,7 +57,7 @@ app.delete('/api/todos/:id', async (req, res) => {
 app.put('/api/todos/:id', async (req, res) => {
   const { id } = req.params;
   const { title, description, duedate, duetime, username } = req.body;
-
+  console.log('PUT request to update todo:', { id, title, description, duedate, duetime, username });
   try {
     await db.query("UPDATE todo_lists SET title = $1, description = $2, duedate = $3, duetime = $4 WHERE id = $5 AND username = $6", [title, description, duedate, duetime, id, username]);
     res.status(200).send({ message: "Todo updated successfully" });

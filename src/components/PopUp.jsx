@@ -44,12 +44,6 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username, todo }) {
         duedate: '',
         duetime: ''
       });
-    } else {
-      setFormData({
-        ...formData,
-        duedate: '',
-        duetime: ''
-      });
     }
   };
 
@@ -95,6 +89,8 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username, todo }) {
     const url = todo ? `http://localhost:5000/api/todos/${todo.id}` : 'http://localhost:5000/api/todos/add';
     const method = todo ? 'PUT' : 'POST';
 
+    console.log('Submitting form:', submitData, 'URL:', url, 'Method:', method);
+
     try {
       const response = await fetch(url, {
         method: method,
@@ -121,7 +117,7 @@ function PopUp({ isOpen, onClose, fetchTodos, togglePopup, username, todo }) {
     } catch (error) {
       console.error('Failed to submit form', error);
     }
-  }
+  };
 
   return (
     <div id="default-modal" aria-hidden={!isOpen} className={`${isOpen ? 'flex' : 'hidden'} overflow-y-auto overflow-x-hidden fixed inset-0 z-50 justify-center items-center w-full h-full`}>
