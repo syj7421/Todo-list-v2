@@ -8,30 +8,44 @@ function Todo({ title, duedate, onEdit, onDelete }) {
   };
 
   const calculateDaysLeft = (dueDate) => {
+    // Parse the dueDate in DD-MM-YYYY format
+    const parts = dueDate.split("-");
+    const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to YYYY-MM-DD format
+  
     const today = new Date();
-    const due = new Date(dueDate);
+    today.setHours(0, 0, 0, 0); // Set the time of today to 00:00:00 to ignore partial days
+    const due = new Date(formattedDate);
+  
+    if (isNaN(due.getTime())) {
+      return NaN;
+    }
+  
     const difference = due - today;
     const daysLeft = Math.ceil(difference / (1000 * 60 * 60 * 24));
     return daysLeft;
   };
-
+  
   const displayDaysLeft = (duedate) => {
-    if (!duedate){
+    if (!duedate) {
       return null;
     }
-    const daysLeft =  calculateDaysLeft(duedate);
-    if (daysLeft === 0){
+    const daysLeft = calculateDaysLeft(duedate);
+    if (isNaN(daysLeft)) {
+      return "Invalid due date";
+    }
+    if (daysLeft < 0) {
+      return "Overdue";
+    }
+    if (daysLeft === 0) {
       return "Due TODAY";
-    } 
-    else if (daysLeft === 1){
+    }
+    if (daysLeft === 1) {
       return "Due TOMORROW";
     }
-    else{
-      return daysLeft + " days left"
-    }
-
-
+    return `${daysLeft} days left`;
   };
+  
+  
 
   return (
     <div className="w-full mb-4">
