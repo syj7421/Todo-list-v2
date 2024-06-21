@@ -36,7 +36,7 @@ function TodoContent({ todos, fetchTodos, username }) {
   return (
     <div className="w-full">
       {todos.map(todo => (
-        <Todo key={todo.id} title={todo.title} onDelete={() => onDelete(todo.id)} onEdit={() => onEdit(todo)} />
+        <Todo key={todo.id} title={todo.title} duedate={todo.formatted_duedate} onDelete={() => onDelete(todo.id)} onEdit={() => onEdit(todo)} />
       ))}
       {isPopupOpen && (
         <PopUp

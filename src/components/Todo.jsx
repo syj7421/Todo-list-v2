@@ -1,17 +1,50 @@
 import React, { useState } from "react";
 
-function Todo({ title, onEdit, onDelete }) {
+function Todo({ title, duedate, onEdit, onDelete }) {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleCheck = () => {
     setIsChecked(!isChecked);
   };
 
+  const calculateDaysLeft = (dueDate) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const difference = due - today;
+    const daysLeft = Math.ceil(difference / (1000 * 60 * 60 * 24));
+    return daysLeft;
+  };
+
+  const displayDaysLeft = (duedate) => {
+    if (!duedate){
+      return null;
+    }
+    const daysLeft =  calculateDaysLeft(duedate);
+    if (daysLeft === 0){
+      return "Due TODAY";
+    } 
+    else if (daysLeft === 1){
+      return "Due TOMORROW";
+    }
+    else{
+      return daysLeft + " days left"
+    }
+
+
+  };
+
   return (
     <div className="w-full mb-4">
       <div className="bg-gray-100 rounded flex p-4 items-center justify-between">
-        <span className={`font-medium ${isChecked ? 'line-through' : ''}`}>{title}</span>
+        <div className="flex justify-between w-full">
+          <span className={`font-medium ${isChecked ? 'line-through' : ''}`}>{title}</span>
+          <div className="flex items-center ml-auto space-x-2">
+            <span className="dayleft text-sm text-gray-500 opacity-90">{duedate ? displayDaysLeft(duedate) : null}</span>
+            <span className="font-medium">{duedate ? duedate : null}</span>
+          </div>
+        </div>
         <div className="tools-container flex justify-end w-1/6 space-x-4">
+          
           <button onClick={handleCheck}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
